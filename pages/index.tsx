@@ -7,22 +7,39 @@ import clsx from 'clsx'
 
 import { useMetaMask } from '@/utils/hooks/useMetaMask';
 
-const DonateBtn = () => {
+const DonateBtn = ({ donateTo, amount, source, destination }: { donateTo: `0x${string}`, amount: number, source: any, destination: any }) => {
   const { wallet, hasProvider, connectMetaMask } = useMetaMask();
+
+  const handleDonate = async (amount: string) => {
+    async function logAccountBalances() {
+      console.log(`${donateTo} has ${(await destination.usdc.balanceOf(account)) / 1e6} aUSDC`);
+    }
+
+    const account = wallet?.accounts[0];
+    const amountBig = Math.floor(parseFloat(amount)) * 1e6 || 10e6;
+
+    const fee = await calculateBridgeFee(source, destination);
+    const balance = await destination.usdc.balanceOf(donateTo);
+    const approveTx = await source.usdc.approve(source.contract.address, amount);
+    await approveTx.wait();
+    const sendTx = await source.contract.sendToMany(destination.name, destination.contract.address, accounts, 'aUSDC', amount, {
+      value: fee,
+    });
+    await sendTx.wait();
+  }
 
   const memoBtnText = useMemo(() => {
     if (!hasProvider) {
       return '';
     }
     if (wallet?.accounts?.length > 0) {
-      const account = wallet?.accounts[0];
       // return `${account.slice(0, 4)}...${account.slice(-5)}`;
       return `Support`;
     }
     return 'Connect MetaMask';
   }, [wallet, hasProvider]);
   return (
-    <div className='rounded-full bg-[#d0fb51] h-[40px] w-full text-center font-bold text-white leading-[40px] text-[24px]' onClick={connectMetaMask}>
+    <div className='rounded-full bg-[#d0fb51] h-[40px] w-full text-center font-bold text-white leading-[40px] text-[24px] cursor-pointer' onClick={connectMetaMask}>
       {memoBtnText}
     </div>
   );
