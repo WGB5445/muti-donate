@@ -1,31 +1,59 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-// import { MetaMaskConnectBtn } from '@/components/MetaMaskConnectBtn'
-import { useAccount } from 'wagmi'
+import { useAccount, useNetwork, usePrepareContractWrite, useSwitchNetwork } from 'wagmi'
 import { useEffect, useState, useMemo } from 'react'
 import clsx from 'clsx'
 
+import { useContractWrite, erc20ABI } from 'wagmi';
+import {
+  AxelarQueryAPI,
+  AxelarAssetTransfer,
+  CHAINS,
+  Environment,
+} from "@axelar-network/axelarjs-sdk";
+
 import { useMetaMask } from '@/utils/hooks/useMetaMask';
 
-const DonateBtn = ({ donateTo, amount, source, destination }: { donateTo: `0x${string}`, amount: number, source: any, destination: any }) => {
+
+const sdk = new AxelarAssetTransfer({
+  environment: Environment.TESTNET
+});
+
+const DonateBtn = ({ donateTo, amount, source, destination }: { donateTo: `0x${string}`, amount: string, source: any, destination: any }) => {
   const { wallet, hasProvider, connectMetaMask } = useMetaMask();
+  const { address } = useAccount()
+  const { chain } = useNetwork();
+  const { chains, isLoading: swichLoading, switchNetwork } = useSwitchNetwork();
 
-  const handleDonate = async (amount: string) => {
-    async function logAccountBalances() {
-      console.log(`${donateTo} has ${(await destination.usdc.balanceOf(account)) / 1e6} aUSDC`);
-    }
 
-    const account = wallet?.accounts[0];
-    const amountBig = Math.floor(parseFloat(amount)) * 1e6 || 10e6;
+  const { data, isLoading, isSuccess, writeAsync } = useContractWrite({
+    address: '0x254d06f33bDc5b8ee05b2ea472107E300226659A',
+    abi: erc20ABI,
+    chainId: chain?.id,
+    functionName: 'transfer',
+  })
 
-    const fee = await calculateBridgeFee(source, destination);
-    const balance = await destination.usdc.balanceOf(donateTo);
-    const approveTx = await source.usdc.approve(source.contract.address, amount);
-    await approveTx.wait();
-    const sendTx = await source.contract.sendToMany(destination.name, destination.contract.address, accounts, 'aUSDC', amount, {
-      value: fee,
+  const handleDonate = async () => {
+    console.log(123)
+    const fromChain = CHAINS.TESTNET.ETHEREUM,
+      toChain = CHAINS.TESTNET.OPTIMISM,
+      destinationAddress = donateTo,
+      asset = "uausdc";  // denom of asset. See note (2) below
+
+    const depositAddress = await sdk.getDepositAddress({
+      fromChain,
+      toChain,
+      destinationAddress,
+      asset
     });
-    await sendTx.wait();
+    console.log("this is deposit: ", depositAddress)
+
+    writeAsync({
+      args: [
+        depositAddress as `0x${string}`,
+        BigInt(Math.floor(parseFloat(amount)) * 1e6 || 10e6)
+      ]
+    })
+
+
   }
 
   const memoBtnText = useMemo(() => {
@@ -38,8 +66,20 @@ const DonateBtn = ({ donateTo, amount, source, destination }: { donateTo: `0x${s
     }
     return 'Connect MetaMask';
   }, [wallet, hasProvider]);
+
+  const memoBtnAction = useMemo(() => {
+    if (!hasProvider) {
+      return () => { };
+    }
+    if (wallet?.accounts?.length > 0) {
+      // return `${account.slice(0, 4)}...${account.slice(-5)}`;
+      return handleDonate;
+    }
+    return () => { };
+  }, [wallet, hasProvider]);
+
   return (
-    <div className='rounded-full bg-[#d0fb51] h-[40px] w-full text-center font-bold text-white leading-[40px] text-[24px] cursor-pointer' onClick={connectMetaMask}>
+    <div className='rounded-full bg-[#d0fb51] h-[40px] w-full text-center font-bold text-white leading-[40px] text-[24px] cursor-pointer' onClick={memoBtnAction}>
       {memoBtnText}
     </div>
   );
@@ -74,7 +114,7 @@ export default function Home() {
           ></input>
         </div>
         {/* <div className='rounded-full bg-[#d0fb51] h-[40px] w-full text-center font-bold text-white leading-[40px] text-[24px]'>Support</div> */}
-        <DonateBtn />
+        <DonateBtn donateTo='0xb15115A15d5992A756D003AE74C0b832918fAb75' amount={"1"} source={undefined} destination={undefined} />
       </div>
     </main>
   )

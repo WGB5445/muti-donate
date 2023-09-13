@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@axelar-network/axelarjs-sdk": "^0.13.6",
     "@metamask/detect-provider": "^2.0.0",
     "@metamask/sdk": "^0.6.2",
     "@rainbow-me/rainbowkit": "^1.0.11",
