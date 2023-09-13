@@ -35,12 +35,12 @@ const wagmiConfig = createConfig({
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <MetaMaskContextProvider>
-      <WagmiConfig config={wagmiConfig}>
-        <RainbowKitProvider chains={chains}>
-          <Component {...pageProps} />
-        </RainbowKitProvider>
-      </WagmiConfig>
-    </MetaMaskContextProvider>
+    // <MetaMaskContextProvider>
+    <WagmiConfig config={wagmiConfig}>
+      <RainbowKitProvider chains={chains}>
+        <Component {...pageProps} />
+      </RainbowKitProvider>
+    </WagmiConfig>
+    // </MetaMaskContextProvider>
   );
 }
