@@ -87,20 +87,21 @@ const DonateBtn = ({ donateTo, amount, toChain }:
 
   //Initialize the wallet
   async function initialize_the_wallet() {
+    // TODO real wallet
     // You'll want to replace this with a wallet from your application
     wallet = Wallet.createRandom();
-    console.log(`Wallet address: ${wallet.address}`);
+    // console.log(`Wallet address: ${wallet.address}`);
   }
 
   // Create a client
   async function create_a_client() {
     if (!wallet) {
-      console.log("Wallet is not initialized");
+      // console.log("Wallet is not initialized");
       return
     }
 
     xmtp = await Client.create(wallet, { env: "production" });
-    console.log("Client created", xmtp.address);
+    // console.log("Client created", xmtp.address);
   }
 
   //Check if an address is on the network
@@ -111,7 +112,7 @@ const DonateBtn = ({ donateTo, amount, toChain }:
     WALLET_TO = donateTo;
     if (xmtp) {
       const isOnDevNetwork = await xmtp.canMessage(WALLET_TO);
-      console.log(`Can message: ${isOnDevNetwork}`);
+      // console.log(`Can message: ${isOnDevNetwork}`);
       return isOnDevNetwork
     }
     return false
@@ -121,21 +122,21 @@ const DonateBtn = ({ donateTo, amount, toChain }:
   async function start_a_new_conversation() {
     const canMessage = await check_if_an_address_is_on_the_network();
     if (!canMessage) {
-      console.log("Cannot message this address. Exiting...");
+      // console.log("Cannot message this address. Exiting...");
       return;
     }
 
     if (xmtp) {
       conversation = await xmtp.conversations.newConversation(donateTo);
-      console.log(`Conversation created with ${conversation.peerAddress}`);
+      // console.log(`Conversation created with ${conversation.peerAddress}`);
     }
   }
 
   //Send a message
   async function send_a_message() {
     if (conversation) {
-      const message = await conversation.send("I transferred to you. Remember to check it");
-      console.log(`Message sent: "${message.content}"`);
+      const message = await conversation.send(`I transferred to ${donateTo} ${amount} 1aUSDC, form ${chain?.name} to ${toChain}, Remember to check it`);
+      // console.log(`Message sent: "${message.content}"`);
       return message;
     }
   }
@@ -147,8 +148,6 @@ const DonateBtn = ({ donateTo, amount, toChain }:
     await start_a_new_conversation();
     await send_a_message();
   }
-
-
 
   const handleDonate = async () => {
     toast('🦄 Sending Donation!', {
